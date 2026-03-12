@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FORGED IN BITS</title>
+<script src="https://brocade.games/arcade.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
 
@@ -1358,7 +1359,24 @@ function enemyTurn() {
 function endRun() {
   cancelAnimationFrame(animFrame);
   animFrame = null;
+  submitScore();
   showResultScreen(false);
+}
+
+async function submitScore() {
+  if (!window._arcade) return;
+  const ds = dungeonState;
+  if (!ds) return;
+  const floor      = ds.floor;
+  const kills      = ds.kills;
+  const generation = STATE.generation;
+  const level      = ds.player.level;
+  const bits       = Object.values(ds.dnaByType).reduce((a,b)=>a+b, 0);
+  const gold       = ds.gold;
+  const creature   = STATE.currentCreature.name;
+  const seed       = String(STATE.currentCreature.seed);
+  const score      = floor * kills * generation;
+  await window._arcade.submitScore({ score, floor, kills, generation, level, bits, gold, creature, seed });
 }
 
 function updateDungeonHUD() {
@@ -1670,6 +1688,16 @@ window.addEventListener('resize', () => {
     resizeDungeonCanvas();
   }
 });
+
+// Arcade leaderboard
+(async () => {
+  try {
+    window._arcade = new Arcade({ gameId: 'forgedinbits' });
+    await window._arcade.ready();
+  } catch(e) {
+    window._arcade = null; // offline — game runs fine without it
+  }
+})();
 
 // flicker effect on title
 const titleEl = document.querySelector('.title-main');
