@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FORGED IN BITS</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+:root {
+  --bg:        #0d0900;
+  --bg2:       #120c00;
+  --panel:     #160f00;
+  --border:    #3a2800;
+  --amber:     #ffb000;
+  --amber-dim: #7a5000;
+  --amber-glow:#ffcc44;
+  --amber-dark:#3d2200;
+  --red:       #ff4400;
+  --teal:      #00ccaa;
+  --text:      #c88020;
+  --text-dim:  #6a4010;
+  --text-bright:#ffd060;
+  --scan:      rgba(255,140,0,0.025);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* CRT scanlines */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, var(--scan) 2px, var(--scan) 4px);
+  pointer-events:none; z-index:9999;
+}
+
+/* CRT vignette */
+body::after {
+  content:'';
+  position:fixed; inset:0;
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.7) 100%);
+  pointer-events:none; z-index:9998;
+}
+
+/* ── SCREENS ── */
+.screen { display:none; }
+.screen.active { display:flex; flex-direction:column; min-height:100vh; }
+#screen-dungeon.active { min-height:unset; height:100vh; max-height:100vh; }
+
+/* ── HEADER ── */
+.hdr {
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  flex-shrink:0;
+}
+.logo {
+  font-family:'Orbitron',sans-serif;
+  font-size:1.1rem; font-weight:900;
+  color:var(--amber);
+  text-shadow:0 0 16px rgba(255,176,0,0.6);
+  letter-spacing:0.2em;
+}
+.hdr-meta { font-size:0.6rem; color:var(--text-dim); letter-spacing:0.15em; text-align:right; line-height:1.6; }
+.hdr-meta span { color:var(--text); }
+
+/* ── TITLE SCREEN ── */
+#screen-title {
+  align-items:center; justify-content:center;
+  background: radial-gradient(ellipse at 50% 40%, #1e1000 0%, var(--bg) 70%);
+}
+.title-box { text-align:center; max-width:560px; padding:40px 20px; }
+.title-main {
+  font-family:'Orbitron',sans-serif;
+  font-size:3.5rem; font-weight:900;
+  color:var(--amber);
+  text-shadow:0 0 40px rgba(255,176,0,0.7), 0 0 80px rgba(255,176,0,0.3);
+  letter-spacing:0.15em;
+  line-height:1;
+}
+.title-sub {
+  font-size:0.7rem; color:var(--text-dim);
+  letter-spacing:0.4em; margin-top:8px;
+}
+.title-blurb {
+  font-size:0.75rem; color:var(--text);
+  line-height:1.8; margin: 24px 0;
+  border:1px solid var(--border);
+  padding:16px; background:var(--panel);
+}
+.btn {
+  display:inline-block;
+  font-family:'Share Tech Mono',monospace;
+  font-size:0.75rem; letter-spacing:0.2em;
+  padding:10px 28px;
+  border:1px solid var(--amber-dim);
+  background:transparent; color:var(--amber);
+  cursor:pointer; text-transform:uppercase;
+  transition:all 0.15s;
+  margin:4px;
+}
+.btn:hover {
+  background:rgba(255,176,0,0.1);
+  border-color:var(--amber);
+  box-shadow:0 0 12px rgba(255,176,0,0.3);
+  color:var(--amber-glow);
+}
+.btn.primary { border-color:var(--amber); background:rgba(255,176,0,0.08); }
+.btn.danger  { border-color:#ff4400; color:#ff4400; }
+.btn.danger:hover { background:rgba(255,68,0,0.1); box-shadow:0 0 12px rgba(255,68,0,0.3); }
+.btn:disabled { opacity:0.3; cursor:not-allowed; }
+
+/* ── CATALOG SCREEN ── */
+#screen-catalog { background:var(--bg); }
+.catalog-grid {
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px,1fr));
+  gap:16px; padding:20px; flex:1;
+}
+.catalog-card {
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-top:2px solid var(--amber-dim);
+  padding:0; cursor:pointer;
+  transition:all 0.15s;
+  position:relative;
+}
+.catalog-card:hover, .catalog-card.selected {
+  border-color:var(--amber);
+  box-shadow:0 0 20px rgba(255,176,0,0.2);
+}
+.catalog-card.selected::after {
+  content:'SELECTED';
+  position:absolute; top:8px; right:8px;
+  font-size:0.5rem; letter-spacing:0.15em;
+  color:var(--amber); background:rgba(255,176,0,0.1);
+  border:1px solid var(--amber-dim); padding:2px 6px;
+}
+.cc-portrait {
+  width:100%; height:120px;
+  background:#060400;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+}
+.cc-portrait svg { width:90px; height:90px; }
+.cc-info { padding:12px; }
+.cc-name {
+  font-family:'Orbitron',sans-serif;
+  font-size:0.8rem; font-weight:700;
+  color:var(--text-bright); letter-spacing:0.1em;
+}
+.cc-arch { font-size:0.6rem; color:var(--amber); letter-spacing:0.15em; margin-top:2px; }
+.cc-stats {
+  display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;
+}
+.spl {
+  font-size:0.55rem; padding:2px 5px;
+  border:1px solid; letter-spacing:0.08em;
+}
+.spl.hp  { color:#ff8866; border-color:#3a1a0a; }
+.spl.atk { color:var(--amber); border-color:#3a2800; }
+.spl.def { color:var(--teal); border-color:#0a2a22; }
+.spl.spd { color:#cc88ff; border-color:#2a1a3a; }
+.cc-abilities { margin-top:8px; }
+.abl-tag {
+  display:inline-block;
+  font-size:0.55rem; padding:2px 6px; margin:2px 2px 0 0;
+  background:rgba(255,176,0,0.06);
+  border:1px solid var(--amber-dark); color:var(--text-dim);
+  letter-spacing:0.08em;
+}
+.catalog-footer {
+  padding:16px 20px; border-top:1px solid var(--border);
+  display:flex; gap:12px; align-items:center;
+  background:var(--panel); flex-shrink:0;
+}
+.catalog-msg { flex:1; font-size:0.65rem; color:var(--text-dim); letter-spacing:0.1em; }
+
+/* ── PRINTER SCREEN ── */
+#screen-printer {
+  align-items:center; justify-content:center;
+  background: radial-gradient(ellipse at 50% 60%, #1a0e00 0%, var(--bg) 70%);
+}
+.printer-box { width:100%; max-width:500px; padding:30px 20px; text-align:center; }
+.printer-title {
+  font-family:'Orbitron',sans-serif;
+  font-size:0.9rem; color:var(--text-dim); letter-spacing:0.3em; margin-bottom:24px;
+}
+.printer-portrait {
+  width:160px; height:160px; margin:0 auto 20px;
+  background:#060400; border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  position:relative; overflow:hidden;
+}
+.printer-portrait svg { width:140px; height:140px; }
+.print-scanline {
+  position:absolute; left:0; right:0; height:3px;
+  background:rgba(255,176,0,0.4);
+  animation: scandown 2s linear infinite;
+}
+@keyframes scandown {
+  from { top: -3px; } to { top: 163px; }
+}
+.printer-bar-wrap {
+  width:100%; height:24px;
+  background:#0a0600; border:1px solid var(--border);
+  margin:16px 0; position:relative; overflow:hidden;
+}
+.printer-bar {
+  height:100%; background:var(--amber);
+  box-shadow:0 0 12px rgba(255,176,0,0.5);
+  transition:width 0.1s linear;
+}
+.printer-pct {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.65rem; letter-spacing:0.2em; color:var(--bg);
+  mix-blend-mode:difference; color:#fff;
+}
+.printer-status { font-size:0.65rem; color:var(--text-dim); letter-spacing:0.15em; margin-bottom:16px; min-height:1.2em; }
+
+/* ── DUNGEON SCREEN ── */
+#screen-dungeon { background:var(--bg); flex-direction:row !important; overflow:hidden; }
+.dungeon-main { flex:1; display:flex; flex-direction:column; min-width:0; overflow:hidden; min-height:0; }
+.dungeon-sidebar {
+  width:220px; flex-shrink:0;
+  border-left:1px solid var(--border);
+  background:var(--panel);
+  display:flex; flex-direction:column;
+  overflow:hidden; min-height:0;
+}
+
+/* Dungeon map */
+.dungeon-map-wrap {
+  flex:1; position:relative; overflow:hidden;
+  background:#060400;
+}
+#dungeon-canvas {
+  display:block;
+  image-rendering:pixelated;
+}
+
+/* Dungeon HUD */
+.dungeon-hud {
+  padding:10px 14px;
+  border-top:1px solid var(--border);
+  background:var(--panel);
+  display:flex; gap:16px; align-items:center;
+  flex-shrink:0; flex-wrap:wrap;
+}
+.hud-block { display:flex; flex-direction:column; gap:2px; }
+.hud-label { font-size:0.5rem; color:var(--text-dim); letter-spacing:0.2em; }
+.hud-val   { font-size:0.8rem; color:var(--text-bright); }
+.hud-bar-wrap { width:80px; height:8px; background:#0a0600; border:1px solid var(--border); }
+.hud-bar { height:100%; transition:width 0.2s; }
+.bar-hp  { background:#cc4422; box-shadow:0 0 4px rgba(204,68,34,0.5); }
+.bar-xp  { background:var(--amber); }
+
+/* Log */
+.dungeon-log {
+  flex:1; overflow-y:auto; padding:10px;
+  font-size:0.6rem; line-height:1.7;
+  min-height:0; max-height:100%;
+}
+.dungeon-log p { border-bottom:1px solid rgba(58,40,0,0.3); padding:2px 0; }
+.log-hit   { color:var(--amber); }
+.log-dmg   { color:#ff6633; }
+.log-item  { color:var(--teal); }
+.log-death { color:#ff4400; font-weight:bold; }
+.log-floor { color:var(--text-bright); letter-spacing:0.1em; }
+.log-sys   { color:var(--text-dim); }
+
+.sidebar-section {
+  padding:10px; border-bottom:1px solid var(--border);
+  font-size:0.6rem; flex-shrink:0;
+}
+.sidebar-section.log-section {
+  flex:1; display:flex; flex-direction:column; min-height:0; overflow:hidden; flex-shrink:1;
+}
+.sidebar-label { font-size:0.55rem; color:var(--text-dim); letter-spacing:0.2em; margin-bottom:6px; }
+
+/* creature panel in sidebar */
+.sb-portrait { width:72px; height:72px; margin:0 auto 8px; display:block; }
+.sb-portrait svg { width:72px; height:72px; }
+
+/* DNA bar */
+.dna-bar-wrap { height:10px; background:#0a0600; border:1px solid var(--border); margin:4px 0; position:relative; overflow:hidden; }
+.dna-bar { height:100%; background:linear-gradient(90deg,#44aa44,#88ff44); transition:width 0.3s; }
+.dna-pct { font-size:0.6rem; color:var(--teal); margin-top:2px; }
+
+/* ── LAB SCREEN ── */
+#screen-lab { background:var(--bg); }
+.lab-layout {
+  display:flex; flex:1; gap:0; overflow:hidden;
+}
+.lab-left {
+  flex:1; padding:20px; overflow-y:auto; min-width:0;
+}
+.lab-right {
+  width:300px; flex-shrink:0;
+  border-left:1px solid var(--border);
+  background:var(--panel);
+  padding:16px; overflow-y:auto;
+}
+.lab-title {
+  font-family:'Orbitron',sans-serif;
+  font-size:0.75rem; letter-spacing:0.25em;
+  color:var(--text-dim); margin-bottom:16px;
+}
+.dna-mixer { margin-bottom:20px; }
+.dna-source-row {
+  display:flex; align-items:center; gap:10px;
+  padding:8px; border:1px solid var(--border);
+  background:#0a0600; margin-bottom:6px;
+}
+.dna-src-portrait { width:40px; height:40px; flex-shrink:0; }
+.dna-src-portrait svg { width:40px; height:40px; }
+.dna-src-name { font-size:0.65rem; color:var(--text-bright); flex:1; }
+.dna-src-pct  { font-size:0.75rem; color:var(--amber); width:36px; text-align:right; }
+.dna-slider {
+  flex:2; -webkit-appearance:none; appearance:none;
+  height:4px; background:var(--border);
+  outline:none; cursor:pointer;
+}
+.dna-slider::-webkit-slider-thumb {
+  -webkit-appearance:none; width:14px; height:14px;
+  background:var(--amber); border-radius:0; cursor:pointer;
+}
+.dna-total {
+  padding:8px; border:1px solid;
+  font-size:0.65rem; letter-spacing:0.1em;
+  margin-bottom:12px; text-align:center;
+}
+.dna-total.ok  { border-color:var(--teal); color:var(--teal); background:rgba(0,204,170,0.05); }
+.dna-total.bad { border-color:#ff4400; color:#ff4400; background:rgba(255,68,0,0.05); }
+
+.preview-box {
+  text-align:center; padding:16px;
+  border:1px solid var(--border); background:#060400;
+  margin-bottom:12px;
+}
+.preview-portrait { width:120px; height:120px; margin:0 auto; }
+.preview-portrait svg { width:120px; height:120px; }
+.preview-name-input {
+  background:#0a0600; border:1px solid var(--amber-dim);
+  color:var(--amber); font-family:'Share Tech Mono',monospace;
+  font-size:0.8rem; padding:6px 10px; width:100%;
+  text-align:center; margin-top:10px; outline:none;
+  text-transform:uppercase; letter-spacing:0.1em;
+}
+.preview-name-input:focus { border-color:var(--amber); }
+
+.gene-readout { margin-bottom:8px; }
+.gr-row {
+  display:flex; align-items:center; gap:6px;
+  font-size:0.58rem; margin-bottom:3px;
+}
+.gr-label { width:80px; color:var(--text-dim); flex-shrink:0; }
+.gr-bar-wrap { flex:1; height:6px; background:#0a0600; border:1px solid var(--border); overflow:hidden; }
+.gr-bar { height:100%; background:var(--amber); }
+.gr-val { width:24px; text-align:right; color:var(--text-bright); }
+
+/* ── RESULT SCREEN ── */
+#screen-result {
+  align-items:center; justify-content:center;
+  background:radial-gradient(ellipse at 50% 40%, #1a0a00 0%, var(--bg) 70%);
+}
+.result-box { max-width:500px; width:100%; padding:30px 20px; text-align:center; }
+.result-title {
+  font-family:'Orbitron',sans-serif;
+  font-size:1.4rem; font-weight:900; letter-spacing:0.2em;
+  margin-bottom:4px;
+}
+.result-title.death { color:#ff4400; text-shadow:0 0 20px rgba(255,68,0,0.5); }
+.result-title.win   { color:var(--amber); text-shadow:0 0 20px rgba(255,176,0,0.5); }
+.result-sub { font-size:0.65rem; color:var(--text-dim); letter-spacing:0.2em; margin-bottom:20px; }
+.result-stats-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:8px; margin-bottom:20px;
+}
+.rs-cell {
+  background:var(--panel); border:1px solid var(--border);
+  padding:10px; text-align:left;
+}
+.rs-label { font-size:0.55rem; color:var(--text-dim); letter-spacing:0.15em; }
+.rs-val   { font-size:1.1rem; color:var(--text-bright); margin-top:2px; }
+.dna-collected-bar {
+  height:20px; background:#0a0600; border:1px solid var(--border);
+  margin:12px 0; position:relative; overflow:hidden;
+}
+.dcb-fill { height:100%; background:linear-gradient(90deg,#2a6a2a,#44ff44); }
+.dcb-label {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.6rem; color:#fff; mix-blend-mode:difference;
+}
+
+/* ── UTILS ── */
+.section-hdr {
+  font-family:'Orbitron',sans-serif;
+  font-size:0.65rem; letter-spacing:0.25em;
+  color:var(--text-dim); padding:10px 20px 6px;
+  border-bottom:1px solid var(--border);
+  background:var(--panel);
+  flex-shrink:0;
+}
+.scrollable { overflow-y:auto; }
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border); }
+
+.blink { animation: blink 1.2s step-end infinite; }
+@keyframes blink { 50% { opacity:0; } }
+
+.amber { color:var(--amber); }
+.dim   { color:var(--text-dim); }
+.bright{ color:var(--text-bright); }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════ TITLE SCREEN ════════════════════════ -->
+<div id="screen-title" class="screen active">
+  <div class="title-box">
+    <div class="title-main">FORGED<br>IN BITS</div>
+    <div class="title-sub">BIOPUNK ROGUELITE · v0.1.0</div>
+    <div class="title-blurb">
+      Order a creature from the catalog. Run the dungeon until it dies.<br>
+      Collect DNA from every kill. Return to the lab.<br>
+      Mix. Print. Evolve.<br><br>
+      <span style="color:var(--amber-dim)">Your monster always comes back — just a little different.</span>
+    </div>
+    <button class="btn primary" onclick="startGame()">▶ NEW GAME</button>
+    <button class="btn" onclick="showScreen('screen-catalog')" id="btn-continue" style="display:none">CONTINUE</button>
+  </div>
+</div>
+
+<!-- ════════════════════════ CATALOG SCREEN ════════════════════════ -->
+<div id="screen-catalog" class="screen">
+  <div class="hdr">
+    <div class="logo">FORGED IN BITS</div>
+    <div class="hdr-meta">BIOMECH CATALOG · SELECT A STARTER<br>GEN <span id="cat-gen">1</span> · PLAYER: <span id="cat-player">—</span></div>
+  </div>
+  <div class="section-hdr">// ORDER FORM — SELECT YOUR CREATURE //</div>
+  <div class="catalog-grid" id="catalog-grid"></div>
+  <div class="catalog-footer">
+    <div class="catalog-msg" id="catalog-msg">SELECT A CREATURE TO BEGIN YOUR RUN</div>
+    <button class="btn primary" id="btn-order" disabled onclick="orderCreature()">ORDER + PRINT ▶</button>
+  </div>
+</div>
+
+<!-- ════════════════════════ PRINTER SCREEN ════════════════════════ -->
+<div id="screen-printer" class="screen">
+  <div class="printer-box">
+    <div class="printer-title">// BIOPRINTER ACTIVE //</div>
+    <div class="printer-portrait" id="printer-portrait">
+      <div class="print-scanline"></div>
+    </div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:1rem;color:var(--amber);letter-spacing:0.15em;margin-bottom:4px" id="printer-name">—</div>
+    <div style="font-size:0.6rem;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:16px" id="printer-arch">—</div>
+    <div class="printer-bar-wrap">
+      <div class="printer-bar" id="printer-bar" style="width:0%"></div>
+      <div class="printer-pct" id="printer-pct">0%</div>
+    </div>
+    <div class="printer-status blink" id="printer-status">INITIALIZING PRINT JOB...</div>
+    <button class="btn primary" id="btn-deploy" style="display:none" onclick="deployToDungeon()">DEPLOY TO DUNGEON ▶</button>
+  </div>
+</div>
+
+<!-- ════════════════════════ DUNGEON SCREEN ════════════════════════ -->
+<div id="screen-dungeon" class="screen">
+  <div class="dungeon-main">
+    <div class="hdr">
+      <div class="logo">FORGED IN BITS</div>
+      <div class="hdr-meta">DUNGEON RUN · FLOOR <span id="d-floor">1</span> · GEN <span id="d-gen">1</span></div>
+    </div>
+    <div class="dungeon-map-wrap" id="dungeon-map-wrap">
+      <canvas id="dungeon-canvas"></canvas>
+    </div>
+    <div class="dungeon-hud">
+      <div class="hud-block">
+        <div class="hud-label">HP</div>
+        <div class="hud-bar-wrap"><div class="hud-bar bar-hp" id="hud-hp-bar" style="width:100%"></div></div>
+        <div class="hud-val" id="hud-hp">—</div>
+      </div>
+      <div class="hud-block">
+        <div class="hud-label">ATK</div>
+        <div class="hud-val" id="hud-atk">—</div>
+      </div>
+      <div class="hud-block">
+        <div class="hud-label">DEF</div>
+        <div class="hud-val" id="hud-def">—</div>
+      </div>
+      <div class="hud-block">
+        <div class="hud-label">SPD</div>
+        <div class="hud-val" id="hud-spd">—</div>
+      </div>
+      <div class="hud-block">
+        <div class="hud-label">LVL</div>
+        <div class="hud-val" id="hud-lvl">1</div>
+      </div>
+      <div class="hud-block">
+        <div class="hud-label">XP</div>
+        <div class="hud-bar-wrap"><div class="hud-bar bar-xp" id="hud-xp-bar" style="width:0%"></div></div>
+        <div class="hud-val" style="font-size:0.6rem" id="hud-xp">0/10</div>
+      </div>
+      <div class="hud-block">
+        <div class="hud-label">KILLS</div>
+        <div class="hud-val" id="hud-kills">0</div>
+      </div>
+      <div class="hud-block">
+        <div class="hud-label">GOLD</div>
+        <div class="hud-val" id="hud-gold">0</div>
+      </div>
+      <div class="hud-block" style="margin-left:auto">
+        <div class="hud-label">CONTROLS: ARROW KEYS / WASD · SPACE=WAIT</div>
+        <div class="hud-val" style="font-size:0.6rem;color:var(--text-dim)" id="hud-msg">EXPLORE THE DUNGEON</div>
+      </div>
+    </div>
+  </div>
+  <div class="dungeon-sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">CREATURE</div>
+      <canvas class="sb-portrait" id="sb-portrait-canvas" width="72" height="72"></canvas>
+      <div style="font-size:0.65rem;color:var(--text-bright);text-align:center" id="sb-name">—</div>
+      <div style="font-size:0.55rem;color:var(--amber);text-align:center;letter-spacing:0.1em" id="sb-arch">—</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">BITS COLLECTED</div>
+      <div class="dna-bar-wrap"><div class="dna-bar" id="dna-bar" style="width:0%"></div></div>
+      <div class="dna-pct" id="dna-pct">0% · 0 kills</div>
+      <div id="dna-breakdown" style="margin-top:6px;font-size:0.55rem;line-height:1.8;color:var(--text-dim)"></div>
+    </div>
+    <div class="sidebar-section log-section">
+      <div class="sidebar-label">COMBAT LOG</div>
+      <div class="dungeon-log" id="dungeon-log"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════ RESULT SCREEN ════════════════════════ -->
+<div id="screen-result" class="screen">
+  <div class="result-box">
+    <div class="result-title death" id="result-title">CREATURE LOST</div>
+    <div class="result-sub" id="result-sub">YOUR MONSTER HAS FALLEN</div>
+    <div class="result-stats-grid" id="result-stats"></div>
+    <div style="font-size:0.6rem;color:var(--text-dim);letter-spacing:0.1em;margin-bottom:6px">DNA RECOVERED THIS RUN</div>
+    <div class="dna-collected-bar">
+      <div class="dcb-fill" id="result-dna-bar" style="width:0%"></div>
+      <div class="dcb-label" id="result-dna-pct">0%</div>
+    </div>
+    <div style="font-size:0.6rem;color:var(--text-dim);margin-bottom:16px" id="result-dna-msg">—</div>
+    <button class="btn primary" onclick="goToLab()">ENTER THE LAB ▶</button>
+  </div>
+</div>
+
+<!-- ════════════════════════ LAB SCREEN ════════════════════════ -->
+<div id="screen-lab" class="screen">
+  <div class="hdr">
+    <div class="logo">FORGED IN BITS</div>
+    <div class="hdr-meta">GENETICS LAB · GEN <span id="lab-gen">1</span></div>
+  </div>
+  <div class="section-hdr">// GENE MIXER — DESIGN YOUR NEXT CREATURE //</div>
+  <div class="lab-layout">
+    <div class="lab-left">
+      <div class="lab-title">BIT SOURCES</div>
+      <div class="dna-mixer" id="dna-mixer"></div>
+      <div class="dna-total ok" id="dna-total">TOTAL: 100% ✓</div>
+      <div class="lab-title" style="margin-top:16px">PROJECTED GENES</div>
+      <div class="gene-readout" id="gene-readout"></div>
+    </div>
+    <div class="lab-right">
+      <div class="lab-title">PREVIEW</div>
+      <div class="preview-box">
+        <div class="preview-portrait" id="preview-portrait"></div>
+        <input class="preview-name-input" id="preview-name" value="SPECIMEN-X" maxlength="16" oninput="updatePreviewName()">
+      </div>
+      <div class="lab-title" style="margin-top:12px">DERIVED STATS</div>
+      <div id="lab-stats" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
+      <div class="lab-title">ABILITIES</div>
+      <div id="lab-abilities" style="margin-bottom:16px;font-size:0.6rem;line-height:1.8;color:var(--text)"></div>
+      <button class="btn primary" style="width:100%;margin-top:8px" onclick="printNewCreature()">PRINT CREATURE ▶</button>
+      <button class="btn" style="width:100%;margin-top:6px" onclick="showScreen('screen-catalog')">ORDER NEW STARTER</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// SEEDED RNG
+// ══════════════════════════════════════════════════════════════════
+function mulberry32(seed) {
+  return function() {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function hashStr(s) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = (h * 0x01000193) >>> 0;
+  }
+  return h;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// GENE DEFINITIONS
+// ══════════════════════════════════════════════════════════════════
+const GENE_DEFS = [
+  { key:'bodyMass',     label:'Body Mass',    group:'visual',  min:10, max:90 },
+  { key:'colorPrime',   label:'Color Prime',  group:'visual',  min:0,  max:360 },
+  { key:'colorAccent',  label:'Color Accent', group:'visual',  min:0,  max:360 },
+  { key:'surfaceTex',   label:'Skin Texture', group:'visual',  min:10, max:90 },
+  { key:'eyeShape',     label:'Eye Type',     group:'visual',  min:10, max:90 },
+  { key:'featureA',     label:'Feature',      group:'visual',  min:10, max:90 },
+  { key:'vitality',     label:'Vitality',     group:'stat',    min:10, max:90 },
+  { key:'ferocity',     label:'Ferocity',     group:'stat',    min:10, max:90 },
+  { key:'carapace',     label:'Carapace',     group:'stat',    min:10, max:90 },
+  { key:'quickness',    label:'Quickness',    group:'stat',    min:10, max:90 },
+  { key:'venomGland',   label:'Venom Gland',  group:'ability', min:0,  max:90 },
+  { key:'regenFactor',  label:'Regen Factor', group:'ability', min:0,  max:90 },
+  { key:'shadowMatter', label:'Shadow Matter',group:'ability', min:0,  max:90 },
+  { key:'thermalCore',  label:'Thermal Core', group:'ability', min:0,  max:90 },
+  { key:'echoSense',    label:'Echo Sense',   group:'ability', min:0,  max:90 },
+  { key:'seismicMass',  label:'Seismic Mass', group:'ability', min:0,  max:90 },
+];
+
+// Level thresholds — XP needed to reach each level
+const XP_THRESHOLDS = [0, 15, 35, 65, 105, 160, 230, 315, 420, 545, 700];
+function xpForLevel(lvl) { return XP_THRESHOLDS[Math.min(lvl, XP_THRESHOLDS.length-1)]; }
+const MAX_LEVEL = XP_THRESHOLDS.length - 1;
+
+// L1 creature is ~25% of full potential. Reaches "full" around L8.
+function deriveStats(g, level=1) {
+  const lvlMult = 0.25 + (level - 1) * 0.10; // 0.25 at L1 → 1.15 at L10
+  return {
+    hp:  Math.max(4, Math.round((20 + g.vitality  * 0.7)  * lvlMult)),
+    atk: Math.max(1, Math.round((3  + g.ferocity  * 0.4)  * lvlMult)),
+    def: Math.max(0, Math.round((1  + g.carapace  * 0.25) * lvlMult)),
+    spd: Math.max(1, Math.round((1  + g.quickness * 0.12) * lvlMult)),
+  };
+}
+
+function deriveAbilities(g) {
+  const abs = [];
+  if (g.venomGland   > 45) abs.push({ name:'Venom Strike', desc:`Poison on hit (+${Math.round(g.venomGland*0.1)} dmg/turn)` });
+  if (g.carapace     > 55) abs.push({ name:'Armored Hide',  desc:`Block ${Math.round(g.carapace*0.08)} flat dmg` });
+  if (g.regenFactor  > 45) abs.push({ name:'Thorn Regen',   desc:`Heal ${Math.round(g.regenFactor*0.06)} HP/floor` });
+  if (g.shadowMatter > 45) abs.push({ name:'Shadow Step',   desc:`${Math.round(g.shadowMatter*0.4)}% dodge chance` });
+  if (g.thermalCore  > 45) abs.push({ name:'Burn Aura',     desc:`${Math.round(g.thermalCore*0.08)} fire dmg on contact` });
+  if (g.echoSense    > 45) abs.push({ name:'Echo Sense',    desc:`Reveal hidden enemies` });
+  if (g.seismicMass  > 45) abs.push({ name:'Tremor',        desc:`Stun foes on move` });
+  if (g.ferocity     > 70) abs.push({ name:'Frenzy',        desc:`+${Math.round(g.ferocity*0.12)} ATK below 30% HP` });
+  return abs;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// STARTER TEMPLATES  (tight gene ranges = curated data points)
+// ══════════════════════════════════════════════════════════════════
+const STARTERS = [
+  {
+    id:'scorpling', name:'SCORPLING', arch:'TANK · POISON',
+    genes:{ bodyMass:72,colorPrime:28,colorAccent:45,surfaceTex:80,eyeShape:28,featureA:85,
+            vitality:70,ferocity:55,carapace:78,quickness:35,
+            venomGland:82,regenFactor:10,shadowMatter:5,thermalCore:8,echoSense:12,seismicMass:20 }
+  },
+  {
+    id:'thornback', name:'THORNBACK', arch:'TANK · REFLECT',
+    genes:{ bodyMass:65,colorPrime:120,colorAccent:80,surfaceTex:85,eyeShape:25,featureA:90,
+            vitality:68,ferocity:50,carapace:72,quickness:40,
+            venomGland:15,regenFactor:65,shadowMatter:10,thermalCore:5,echoSense:8,seismicMass:30 }
+  },
+  {
+    id:'gloomfang', name:'GLOOMFANG', arch:'DAMAGE · STEALTH',
+    genes:{ bodyMass:42,colorPrime:270,colorAccent:200,surfaceTex:15,eyeShape:78,featureA:20,
+            vitality:50,ferocity:78,carapace:35,quickness:72,
+            venomGland:20,regenFactor:5,shadowMatter:85,thermalCore:10,echoSense:30,seismicMass:5 }
+  },
+  {
+    id:'cinderpaw', name:'CINDERPAW', arch:'DAMAGE · BURST',
+    genes:{ bodyMass:68,colorPrime:10,colorAccent:35,surfaceTex:45,eyeShape:58,featureA:30,
+            vitality:62,ferocity:85,carapace:45,quickness:60,
+            venomGland:10,regenFactor:8,shadowMatter:15,thermalCore:88,echoSense:5,seismicMass:25 }
+  },
+  {
+    id:'veilwing', name:'VEILWING', arch:'AGILITY · CONTROL',
+    genes:{ bodyMass:30,colorPrime:200,colorAccent:240,surfaceTex:20,eyeShape:82,featureA:95,
+            vitality:42,ferocity:55,carapace:28,quickness:90,
+            venomGland:18,regenFactor:20,shadowMatter:40,thermalCore:5,echoSense:75,seismicMass:5 }
+  },
+  {
+    id:'murklurk', name:'MURKLURK', arch:'TANK · CONTROL',
+    genes:{ bodyMass:88,colorPrime:205,colorAccent:160,surfaceTex:60,eyeShape:10,featureA:15,
+            vitality:80,ferocity:45,carapace:80,quickness:20,
+            venomGland:5,regenFactor:30,shadowMatter:10,thermalCore:5,echoSense:88,seismicMass:82 }
+  },
+];
+
+// ══════════════════════════════════════════════════════════════════
+// ENEMY DNA TEMPLATES
+// Each enemy type has a gene vector — killing them contributes
+// their DNA to the pool. Values are medians; actual collected
+// genes are the enemy's rolled stats blended into the pool.
+// ══════════════════════════════════════════════════════════════════
+const ENEMY_DNA = {
+  GOBLIN:    { bodyMass:35, colorPrime:100, colorAccent:60,  surfaceTex:25, eyeShape:55, featureA:40,
+               vitality:30, ferocity:65,  carapace:20, quickness:70,
+               venomGland:5,  regenFactor:5,  shadowMatter:20, thermalCore:5,  echoSense:15, seismicMass:10 },
+  SLIME:     { bodyMass:80, colorPrime:140, colorAccent:160, surfaceTex:5,  eyeShape:15, featureA:5,
+               vitality:60, ferocity:25,  carapace:30, quickness:15,
+               venomGland:30, regenFactor:80, shadowMatter:5,  thermalCore:5,  echoSense:5,  seismicMass:40 },
+  RATKIN:    { bodyMass:28, colorPrime:20,  colorAccent:40,  surfaceTex:30, eyeShape:65, featureA:50,
+               vitality:25, ferocity:55,  carapace:15, quickness:85,
+               venomGland:10, regenFactor:10, shadowMatter:55, thermalCore:5,  echoSense:40, seismicMass:5  },
+  STONECRAB: { bodyMass:85, colorPrime:210, colorAccent:180, surfaceTex:90, eyeShape:20, featureA:20,
+               vitality:70, ferocity:30,  carapace:85, quickness:10,
+               venomGland:5,  regenFactor:20, shadowMatter:5,  thermalCore:5,  echoSense:10, seismicMass:75 },
+  SHADOW:    { bodyMass:40, colorPrime:260, colorAccent:290, surfaceTex:10, eyeShape:80, featureA:35,
+               vitality:35, ferocity:70,  carapace:20, quickness:65,
+               venomGland:15, regenFactor:5,  shadowMatter:85, thermalCore:50, echoSense:60, seismicMass:5  },
+};
+function hsl(h,s,l,a=1) {
+  return a<1 ? `hsla(${h},${s}%,${l}%,${a})` : `hsl(${h},${s}%,${l}%)`;
+}
+
+function drawPortrait(g, w=72, h=72) {
+  const c  = hsl(g.colorPrime, 65, 42);
+  const c2 = hsl(g.colorPrime, 50, 28);
+  const ac = hsl(g.colorAccent, 80, 62);
+  const mass = g.bodyMass / 90;
+  const bw = 14 + mass*14, bh = 10 + mass*10;
+  const hw = 8 + mass*6,   hh = 7 + mass*5;
+  const cx = w/2, by = h*0.62, hy = h*0.32;
+  const eyeGlow = g.eyeShape > 60;
+  const hasWings = g.featureA > 75 && g.bodyMass < 50;
+  const hasTail  = g.featureA > 75 && g.bodyMass >= 50;
+  const hasSpines = g.surfaceTex > 70;
+  const hasHorns  = g.featureA > 60 && g.featureA <= 75;
+
+  let svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+  <rect width="${w}" height="${h}" fill="#060400"/>`;
+
+  // wings
+  if (hasWings) {
+    svg += `<path d="M ${cx} ${hy+hh} Q ${cx-w*0.5} ${hy} ${cx-w*0.4} ${by} Z" fill="${hsl(g.colorPrime,40,22,0.7)}" stroke="${ac}" stroke-width="0.5"/>`;
+    svg += `<path d="M ${cx} ${hy+hh} Q ${cx+w*0.5} ${hy} ${cx+w*0.4} ${by} Z" fill="${hsl(g.colorPrime,40,22,0.7)}" stroke="${ac}" stroke-width="0.5"/>`;
+  }
+
+  // glow
+  if (g.thermalCore > 50) svg += `<ellipse cx="${cx}" cy="${by}" rx="${bw*1.3}" ry="${bh}" fill="${hsl(g.colorPrime,70,20,0.35)}"/>`;
+  if (g.shadowMatter > 50) svg += `<ellipse cx="${cx}" cy="${by+bh*0.5}" rx="${bw*1.4}" ry="${bh*0.7}" fill="${hsl(270,60,8,0.6)}"/>`;
+
+  // body
+  svg += `<ellipse cx="${cx}" cy="${by}" rx="${bw}" ry="${bh}" fill="${c}" stroke="#000" stroke-width="1"/>`;
+
+  // plates / texture
+  if (hasSpines) {
+    for (let i=-1; i<=1; i++) {
+      svg += `<line x1="${cx+i*bw*0.35}" y1="${by-bh}" x2="${cx+i*bw*0.35+i*2}" y2="${by-bh-8-Math.abs(i)*2}" stroke="${ac}" stroke-width="2" stroke-linecap="round"/>`;
+    }
+  } else if (g.surfaceTex > 40) {
+    svg += `<ellipse cx="${cx}" cy="${by-bh*0.2}" rx="${bw*0.75}" ry="${bh*0.45}" fill="${c2}" opacity="0.7"/>`;
+  }
+
+  // head
+  svg += `<ellipse cx="${cx}" cy="${hy}" rx="${hw}" ry="${hh}" fill="${c}" stroke="#000" stroke-width="1"/>`;
+
+  // horns
+  if (hasHorns) {
+    svg += `<line x1="${cx-hw*0.6}" y1="${hy-hh*0.6}" x2="${cx-hw*0.8}" y2="${hy-hh*1.5}" stroke="${c}" stroke-width="2" stroke-linecap="round"/>`;
+    svg += `<line x1="${cx+hw*0.6}" y1="${hy-hh*0.6}" x2="${cx+hw*0.8}" y2="${hy-hh*1.5}" stroke="${c}" stroke-width="2" stroke-linecap="round"/>`;
+  }
+
+  // eyes
+  const ex = hw*0.5, er = 1.5 + g.eyeShape/35;
+  const ey = hy - hh*0.1;
+  if (g.eyeShape < 30) {
+    // tiny/vestigial
+    svg += `<ellipse cx="${cx-ex}" cy="${ey}" rx="${er*0.7}" ry="${er*0.4}" fill="#0a0600"/>`;
+    svg += `<ellipse cx="${cx+ex}" cy="${ey}" rx="${er*0.7}" ry="${er*0.4}" fill="#0a0600"/>`;
+  } else {
+    svg += `<circle cx="${cx-ex}" cy="${ey}" r="${er}" fill="#000"/>`;
+    svg += `<circle cx="${cx+ex}" cy="${ey}" r="${er}" fill="#000"/>`;
+    svg += `<circle cx="${cx-ex}" cy="${ey}" r="${er*0.6}" fill="${ac}" opacity="${eyeGlow?1:0.7}"/>`;
+    svg += `<circle cx="${cx+ex}" cy="${ey}" r="${er*0.6}" fill="${ac}" opacity="${eyeGlow?1:0.7}"/>`;
+    if (eyeGlow) {
+      svg += `<circle cx="${cx-ex}" cy="${ey}" r="${er*0.25}" fill="#fff" opacity="0.5"/>`;
+      svg += `<circle cx="${cx+ex}" cy="${ey}" r="${er*0.25}" fill="#fff" opacity="0.5"/>`;
+    }
+  }
+
+  // tail
+  if (hasTail) {
+    const tx = cx + bw, ty = by - bh*0.2;
+    svg += `<path d="M ${tx} ${ty} Q ${tx+w*0.18} ${ty-10} ${tx+w*0.1} ${ty-22}" fill="none" stroke="${c}" stroke-width="${2+mass*1.5}" stroke-linecap="round"/>`;
+    if (g.venomGland > 50) svg += `<polygon points="${tx+w*0.1},${ty-22} ${tx+w*0.15},${ty-28} ${tx+w*0.05},${ty-28}" fill="${ac}"/>`;
+  }
+
+  // fire
+  if (g.thermalCore > 60) {
+    svg += `<path d="M ${cx-5} ${hy-hh} Q ${cx-8} ${hy-hh-10} ${cx-3} ${hy-hh-7}" fill="${ac}" opacity="0.85"/>`;
+    svg += `<path d="M ${cx+2} ${hy-hh} Q ${cx+7} ${hy-hh-14} ${cx+4} ${hy-hh-9}" fill="${hsl(g.colorAccent,90,70)}" opacity="0.9"/>`;
+  }
+
+  // limbs
+  const limbY = by + bh*0.3;
+  svg += `<line x1="${cx-bw*0.7}" y1="${limbY}" x2="${cx-bw*0.9}" y2="${limbY+10}" stroke="${c}" stroke-width="${1.5+mass}" stroke-linecap="round"/>`;
+  svg += `<line x1="${cx+bw*0.7}" y1="${limbY}" x2="${cx+bw*0.9}" y2="${limbY+10}" stroke="${c}" stroke-width="${1.5+mass}" stroke-linecap="round"/>`;
+
+  svg += `</svg>`;
+  return svg;
+}
+
+function drawToken(g, sz=24) {
+  const c  = hsl(g.colorPrime, 65, 42);
+  const ac = hsl(g.colorAccent, 80, 62);
+  const mass = g.bodyMass/90;
+  const bw = 4+mass*4, bh = 3+mass*3;
+  const cx=sz/2, by=sz*0.62, hy=sz*0.34;
+  return `<svg viewBox="0 0 ${sz} ${sz}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${sz}" height="${sz}" fill="#060400"/>
+    <ellipse cx="${cx}" cy="${by}" rx="${bw}" ry="${bh}" fill="${c}"/>
+    <ellipse cx="${cx}" cy="${hy}" rx="${bw*0.7}" ry="${bh*0.9}" fill="${c}"/>
+    <circle cx="${cx-bw*0.45}" cy="${hy-0.5}" r="1.2" fill="${ac}"/>
+    <circle cx="${cx+bw*0.45}" cy="${hy-0.5}" r="1.2" fill="${ac}"/>
+  </svg>`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// GAME STATE
+// ══════════════════════════════════════════════════════════════════
+const STATE = {
+  generation: 1,
+  playerName: 'PLAYER',
+  currentCreature: null,   // { id, name, arch, genes, stats, abilities, seed }
+  dnaPool: [],             // [{ creatureId, genes, pct }]  collected from runs
+  runStats: { kills:0, gold:0, floor:1, dnaCollected:0 },
+  history: [],             // past creatures
+};
+
+// ══════════════════════════════════════════════════════════════════
+// SCREEN MANAGEMENT
+// ══════════════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startGame() {
+  STATE.generation = 1;
+  STATE.dnaPool = [];
+  STATE.history = [];
+  buildCatalog();
+  showScreen('screen-catalog');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CATALOG
+// ══════════════════════════════════════════════════════════════════
+let selectedStarter = null;
+
+function buildCatalog() {
+  document.getElementById('cat-gen').textContent = STATE.generation;
+  const grid = document.getElementById('catalog-grid');
+  grid.innerHTML = STARTERS.map(s => {
+    const stats = deriveStats(s.genes);
+    const abs   = deriveAbilities(s.genes);
+    return `<div class="catalog-card" id="cc-${s.id}" onclick="selectStarter('${s.id}')">
+      <div class="cc-portrait">${drawPortrait(s.genes, 90, 90)}</div>
+      <div class="cc-info">
+        <div class="cc-name">${s.name}</div>
+        <div class="cc-arch">${s.arch}</div>
+        <div class="cc-stats">
+          <span class="spl hp">HP ${stats.hp}</span>
+          <span class="spl atk">ATK ${stats.atk}</span>
+          <span class="spl def">DEF ${stats.def}</span>
+          <span class="spl spd">SPD ${stats.spd}</span>
+        </div>
+        <div class="cc-abilities">${abs.slice(0,2).map(a=>`<span class="abl-tag">${a.name}</span>`).join('')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectStarter(id) {
+  selectedStarter = id;
+  document.querySelectorAll('.catalog-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('cc-'+id).classList.add('selected');
+  document.getElementById('btn-order').disabled = false;
+  document.getElementById('catalog-msg').textContent = `SELECTED: ${STARTERS.find(s=>s.id===id).name} · CLICK ORDER TO CONTINUE`;
+}
+
+function orderCreature() {
+  const template = STARTERS.find(s => s.id === selectedStarter);
+  STATE.currentCreature = {
+    id: template.id,
+    name: template.name,
+    arch: template.arch,
+    genes: { ...template.genes },
+    seed: Date.now(),
+  };
+  STATE.currentCreature.stats = deriveStats(STATE.currentCreature.genes);
+  STATE.currentCreature.abilities = deriveAbilities(STATE.currentCreature.genes);
+  startPrinter(STATE.currentCreature);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PRINTER
+// ══════════════════════════════════════════════════════════════════
+function startPrinter(creature) {
+  showScreen('screen-printer');
+  document.getElementById('printer-name').textContent = creature.name;
+  document.getElementById('printer-arch').textContent = creature.arch;
+  document.getElementById('btn-deploy').style.display = 'none';
+
+  const portrait = document.getElementById('printer-portrait');
+  // keep scanline, inject portrait svg behind it
+  const existing = portrait.querySelector('svg');
+  if (existing) existing.remove();
+  const scanline = portrait.querySelector('.print-scanline');
+  const svgEl = document.createElement('div');
+  svgEl.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 1s';
+  svgEl.innerHTML = drawPortrait(creature.genes, 140, 140);
+  portrait.insertBefore(svgEl, scanline);
+
+  let pct = 0;
+  const MESSAGES = ['INITIALIZING PRINT JOB...','EXTRUDING BASE MATRIX...','VASCULARIZING TISSUE LAYER...','ENCODING ABILITY NODES...','CALIBRATING GENE EXPRESSION...','FINALIZING NERVOUS SYSTEM...','PRINT COMPLETE'];
+  const bar = document.getElementById('printer-bar');
+  const pctEl = document.getElementById('printer-pct');
+  const status = document.getElementById('printer-status');
+
+  const interval = setInterval(() => {
+    pct += Math.random() * 3 + 0.5;
+    if (pct > 100) pct = 100;
+    bar.style.width = pct + '%';
+    pctEl.textContent = Math.round(pct) + '%';
+    const msgIdx = Math.min(Math.floor(pct / 16), MESSAGES.length-1);
+    status.textContent = MESSAGES[msgIdx];
+    if (pct > 40) svgEl.style.opacity = ((pct-40)/60).toString();
+    if (pct >= 100) {
+      clearInterval(interval);
+      status.classList.remove('blink');
+      status.textContent = '✓ CREATURE READY FOR DEPLOYMENT';
+      document.getElementById('btn-deploy').style.display = 'inline-block';
+    }
+  }, 80);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// DUNGEON
+// ══════════════════════════════════════════════════════════════════
+const TILE = 20;
+const MAP_W = 40, MAP_H = 30;
+let dungeonState = null;
+let animFrame = null;
+let keyState = {};
+let lastMove = 0;
+const MOVE_DELAY = 150;
+
+const T = { WALL:0, FLOOR:1, STAIR:2, DOOR:3 };
+
+function deployToDungeon() {
+  STATE.runStats = { kills:0, gold:0, floor:1 };
+  const c = STATE.currentCreature;
+  const s = deriveStats(c.genes, 1); // start at level 1
+  dungeonState = {
+    map: null,
+    player: { x:2, y:2, hp: s.hp, maxHp: s.hp, atk:s.atk, def:s.def, spd:s.spd, level:1, xp:0 },
+    enemies: [],
+    items: [],
+    floor: 1,
+    kills: 0,
+    gold: 0,
+    dnaCollected: 0,
+    dnaByType: {},      // type → kill count
+    dnaEnemyGenes: {},  // type → blended gene vector
+    log: [],
+  };
+  generateFloor();
+  showScreen('screen-dungeon');
+  resizeDungeonCanvas();
+  updateDungeonHUD();
+  updateSidebar();
+  addLog('SYS', `${c.name} deployed to floor 1.`);
+  addLog('SYS', 'ARROW KEYS or WASD to move. SPACE to wait.');
+  if (c.abilities.length) addLog('ITEM', `Abilities: ${c.abilities.map(a=>a.name).join(', ')}`);
+  renderDungeon();
+  if (animFrame) cancelAnimationFrame(animFrame);
+  loop();
+}
+
+function resizeDungeonCanvas() {
+  const wrap = document.getElementById('dungeon-map-wrap');
+  const canvas = document.getElementById('dungeon-canvas');
+  canvas.width  = wrap.clientWidth  || MAP_W * TILE;
+  canvas.height = wrap.clientHeight || MAP_H * TILE;
+}
+
+function generateFloor() {
+  const ds = dungeonState;
+  const map = Array.from({length:MAP_H}, () => Array(MAP_W).fill(T.WALL));
+
+  // BSP-lite: carve random rooms
+  const rooms = [];
+  for (let i=0; i<12; i++) {
+    const rw = 4 + Math.floor(Math.random()*6);
+    const rh = 3 + Math.floor(Math.random()*5);
+    const rx = 1 + Math.floor(Math.random()*(MAP_W-rw-2));
+    const ry = 1 + Math.floor(Math.random()*(MAP_H-rh-2));
+    // check overlap
+    let overlap = false;
+    for (const r of rooms) {
+      if (rx < r.x+r.w+2 && rx+rw+2 > r.x && ry < r.y+r.h+2 && ry+rh+2 > r.y) { overlap=true; break; }
+    }
+    if (!overlap) {
+      for (let y=ry; y<ry+rh; y++) for (let x=rx; x<rx+rw; x++) map[y][x] = T.FLOOR;
+      rooms.push({x:rx,y:ry,w:rw,h:rh,cx:Math.floor(rx+rw/2),cy:Math.floor(ry+rh/2)});
+    }
+  }
+
+  // connect rooms with corridors
+  for (let i=1; i<rooms.length; i++) {
+    const a = rooms[i-1], b = rooms[i];
+    let cx=a.cx, cy=a.cy;
+    while (cx !== b.cx) { map[cy][cx]=T.FLOOR; cx += cx<b.cx?1:-1; }
+    while (cy !== b.cy) { map[cy][cx]=T.FLOOR; cy += cy<b.cy?1:-1; }
+  }
+
+  // place stairs in last room
+  if (rooms.length) {
+    const last = rooms[rooms.length-1];
+    map[last.cy][last.cx] = T.STAIR;
+  }
+
+  ds.map = map;
+
+  // place player in first room
+  if (rooms.length) {
+    ds.player.x = rooms[0].cx;
+    ds.player.y = rooms[0].cy;
+  }
+
+  // spawn enemies — floor 1 should be a real threat to a L1 creature
+  ds.enemies = [];
+  const floorMult = 1 + (ds.floor-1)*0.3;  // 30% per floor, gets nasty fast
+  const enemyCounts = [5, 6, 7, 8, 9, 10, 12, 14];
+  const count = enemyCounts[Math.min(ds.floor-1, enemyCounts.length-1)];
+  for (let i=0; i<count; i++) {
+    if (rooms.length < 2) break;
+    const room = rooms[1 + Math.floor(Math.random()*(rooms.length-1))];
+    const ex = room.x + 1 + Math.floor(Math.random()*(Math.max(1,room.w-2)));
+    const ey = room.y + 1 + Math.floor(Math.random()*(Math.max(1,room.h-2)));
+    const ETYPES = [
+      { name:'GOBLIN',    hp:8,  atk:5, def:0 },
+      { name:'SLIME',     hp:12, atk:4, def:1 },
+      { name:'RATKIN',    hp:7,  atk:6, def:0 },
+      { name:'STONECRAB', hp:16, atk:4, def:4 },
+      { name:'SHADOW',    hp:9,  atk:7, def:0 },
+    ];
+    const et = ETYPES[Math.floor(Math.random()*ETYPES.length)];
+    const hp  = Math.round(et.hp  * floorMult);
+    const atk = Math.round(et.atk * floorMult);
+    const def = Math.round(et.def + (ds.floor-1)*0.5);
+    ds.enemies.push({ x:ex, y:ey, type:et.name, hp, maxHp:hp, atk, def, alive:true, id:i });
+  }
+
+  // spawn ground items — BITs are random type from enemies present on this floor
+  ds.items = [];
+  const floorEnemyTypes = [...new Set(ds.enemies.map(e=>e.type))];
+  for (let i=0; i<2; i++) {  // fewer ground drops — kills are the main source
+    if (rooms.length < 2) break;
+    const room = rooms[Math.floor(Math.random()*rooms.length)];
+    const ix = room.x+1+Math.floor(Math.random()*(Math.max(1,room.w-2)));
+    const iy = room.y+1+Math.floor(Math.random()*(Math.max(1,room.h-2)));
+    const itype = Math.random()<0.5 ? 'GOLD' : 'BIT';
+    const bitType = floorEnemyTypes[Math.floor(Math.random()*floorEnemyTypes.length)];
+    ds.items.push({ x:ix, y:iy, type:itype, bitType: itype==='BIT'?bitType:null, val:itype==='GOLD'?3+Math.floor(Math.random()*6):1, id:i });
+  }
+}
+
+function renderDungeon() {
+  const canvas = document.getElementById('dungeon-canvas');
+  const ctx = canvas.getContext('2d');
+  const ds = dungeonState;
+  if (!ds) return;
+
+  const cw = canvas.width, ch = canvas.height;
+  ctx.fillStyle = '#060400';
+  ctx.fillRect(0,0,cw,ch);
+
+  // camera center on player
+  const offX = Math.round(cw/2 - ds.player.x*TILE - TILE/2);
+  const offY = Math.round(ch/2 - ds.player.y*TILE - TILE/2);
+
+  ctx.save();
+  ctx.translate(offX, offY);
+
+  // tiles
+  for (let y=0; y<MAP_H; y++) {
+    for (let x=0; x<MAP_W; x++) {
+      const t = ds.map[y][x];
+      if (t === T.WALL) continue;
+      const px = x*TILE, py = y*TILE;
+      if (t === T.FLOOR) {
+        ctx.fillStyle = '#1a1000';
+        ctx.fillRect(px,py,TILE,TILE);
+        ctx.strokeStyle = '#2a1a00';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(px,py,TILE,TILE);
+      } else if (t === T.STAIR) {
+        ctx.fillStyle = '#2a2000';
+        ctx.fillRect(px,py,TILE,TILE);
+        ctx.fillStyle = '#ffb000';
+        ctx.font = `${TILE*0.65}px monospace`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('▼', px+TILE/2, py+TILE/2);
+      }
+    }
+  }
+
+  // items
+  for (const item of ds.items) {
+    const px = item.x*TILE, py = item.y*TILE;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    if (item.type === 'GOLD') {
+      ctx.font = `${TILE*0.6}px monospace`;
+      ctx.fillStyle = '#ffb000';
+      ctx.fillText('$', px+TILE/2, py+TILE/2);
+    } else {
+      // BIT — show first letter of type in teal
+      ctx.font = `bold ${TILE*0.55}px monospace`;
+      ctx.fillStyle = '#00ccaa';
+      ctx.shadowColor = 'rgba(0,204,170,0.6)';
+      ctx.shadowBlur = 4;
+      ctx.fillText((item.bitType||'?')[0], px+TILE/2, py+TILE/2);
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  // enemies
+  for (const e of ds.enemies) {
+    if (!e.alive) continue;
+    const px = e.x*TILE, py = e.y*TILE;
+    ctx.fillStyle = '#3a0a0a';
+    ctx.fillRect(px+1,py+1,TILE-2,TILE-2);
+    // hp bar
+    const hpPct = e.hp/e.maxHp;
+    ctx.fillStyle = '#660000';
+    ctx.fillRect(px+1,py+TILE-4,TILE-2,3);
+    ctx.fillStyle = hpPct>0.5?'#cc4422':'#ff2200';
+    ctx.fillRect(px+1,py+TILE-4,Math.round((TILE-2)*hpPct),3);
+    ctx.font = `${TILE*0.55}px monospace`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle='#ff6644';
+    ctx.fillText(e.type[0], px+TILE/2, py+TILE/2-1);
+  }
+
+  // player
+  const pp = ds.player;
+  const px2 = pp.x*TILE, py2 = pp.y*TILE;
+  ctx.fillStyle = '#1a1200';
+  ctx.fillRect(px2+1,py2+1,TILE-2,TILE-2);
+  ctx.font = `${TILE*0.7}px monospace`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle = '#ffcc44';
+  ctx.shadowColor = 'rgba(255,176,0,0.8)';
+  ctx.shadowBlur = 6;
+  ctx.fillText('@', px2+TILE/2, py2+TILE/2);
+  ctx.shadowBlur = 0;
+
+  ctx.restore();
+}
+
+function loop() {
+  renderDungeon();
+  animFrame = requestAnimationFrame(loop);
+}
+
+function movePlayer(dx, dy) {
+  const ds = dungeonState;
+  const np = { x: ds.player.x+dx, y: ds.player.y+dy };
+  if (np.x<0||np.y<0||np.x>=MAP_W||np.y>=MAP_H) return;
+  if (ds.map[np.y][np.x] === T.WALL) return;
+
+  // check enemy collision → attack
+  const enemy = ds.enemies.find(e => e.alive && e.x===np.x && e.y===np.y);
+  if (enemy) {
+    attackEnemy(enemy);
+    enemyTurn();
+    return;
+  }
+
+  // move
+  ds.player.x = np.x;
+  ds.player.y = np.y;
+
+  // pick up items
+  const itemIdx = ds.items.findIndex(i => i.x===np.x && i.y===np.y);
+  if (itemIdx >= 0) {
+    const item = ds.items.splice(itemIdx, 1)[0];
+    if (item.type === 'GOLD') {
+      ds.gold += item.val;
+      STATE.runStats.gold += item.val;
+      addLog('ITEM', `Picked up ${item.val} gold.`);
+    } else if (item.type === 'BIT') {
+      const btype = item.bitType;
+      ds.dnaByType[btype] = (ds.dnaByType[btype] || 0) + 1;
+      // Also ensure enemy gene template exists for this type
+      if (!ds.dnaEnemyGenes[btype] && ENEMY_DNA[btype]) {
+        ds.dnaEnemyGenes[btype] = { ...ENEMY_DNA[btype], _count: 1 };
+      }
+      addLog('ITEM', `+1 ${btype} BIT absorbed from the floor.`);
+    }
+    updateDungeonHUD();
+    updateSidebar();
+  }
+
+  // check stairs
+  if (ds.map[np.y][np.x] === T.STAIR) {
+    ds.floor++;
+    STATE.runStats.floor = ds.floor;
+    addLog('FLOOR', `--- DESCENDING TO FLOOR ${ds.floor} ---`);
+    generateFloor();
+    updateDungeonHUD();
+  }
+
+  enemyTurn();
+  updateDungeonHUD();
+  updateSidebar();
+}
+
+function attackEnemy(e) {
+  const ds = dungeonState;
+  const c = STATE.currentCreature;
+  let dmg = Math.max(1, ds.player.atk - e.def + Math.floor(Math.random()*4-1));
+  // venom
+  if (c.genes.venomGland > 45 && Math.random() < 0.3) {
+    e._poisoned = (e._poisoned||0) + Math.round(c.genes.venomGland*0.15);
+    addLog('HIT', `${e.type} poisoned!`);
+  }
+  e.hp -= dmg;
+  addLog('HIT', `You hit ${e.type} for ${dmg} dmg. (${Math.max(0,e.hp)}/${e.maxHp} HP)`);
+  if (e.hp <= 0) killEnemy(e);
+}
+
+function killEnemy(e) {
+  const ds = dungeonState;
+  e.alive = false;
+  ds.kills++;
+  STATE.runStats.kills = ds.kills;
+
+  // XP gain
+  const xpGain = 3 + Math.floor(e.maxHp / 4);
+  ds.player.xp += xpGain;
+  checkLevelUp();
+
+  // Raw DNA units by type — no cap, just accumulate
+  ds.dnaByType[e.type] = (ds.dnaByType[e.type] || 0) + 1;
+
+  // Blend this enemy's genes into running average for its type
+  const template = ENEMY_DNA[e.type];
+  if (template) {
+    if (!ds.dnaEnemyGenes[e.type]) {
+      ds.dnaEnemyGenes[e.type] = { ...template, _count: 1 };
+    } else {
+      const prev = ds.dnaEnemyGenes[e.type];
+      const n = prev._count + 1;
+      for (const k of Object.keys(template)) {
+        prev[k] = Math.round((prev[k] * prev._count + template[k]) / n);
+      }
+      prev._count = n;
+    }
+  }
+
+  const goldGain = 2 + Math.floor(Math.random()*5);
+  ds.gold += goldGain;
+  STATE.runStats.gold = ds.gold;
+  addLog('HIT', `${e.type} slain! +${xpGain}XP · +${goldGain}g · +1 ${e.type} BIT`);
+  updateSidebar();
+}
+
+function checkLevelUp() {
+  const ds = dungeonState;
+  const p  = ds.player;
+  const c  = STATE.currentCreature;
+  if (p.level >= MAX_LEVEL) return;
+  const needed = xpForLevel(p.level + 1);
+  if (p.xp >= needed) {
+    p.level++;
+    const newStats = deriveStats(c.genes, p.level);
+    const hpGain = newStats.hp - deriveStats(c.genes, p.level-1).hp;
+    p.maxHp = newStats.hp;
+    p.hp    = Math.min(p.maxHp, p.hp + hpGain); // heal the difference
+    p.atk   = newStats.atk;
+    p.def   = newStats.def;
+    p.spd   = newStats.spd;
+    addLog('FLOOR', `▲ LEVEL UP! Now level ${p.level} · HP ${p.hp}/${p.maxHp} · ATK ${p.atk} · DEF ${p.def}`);
+  }
+}
+
+function enemyTurn() {
+  const ds = dungeonState;
+  const c = STATE.currentCreature;
+  for (const e of ds.enemies) {
+    if (!e.alive) continue;
+
+    // poison tick
+    if (e._poisoned) {
+      e.hp -= e._poisoned;
+      if (e.hp <= 0) { killEnemy(e); continue; }
+    }
+
+    // simple AI: move toward player if adjacent room, attack if adjacent
+    const ddx = ds.player.x - e.x, ddy = ds.player.y - e.y;
+    const dist = Math.abs(ddx)+Math.abs(ddy);
+    if (dist === 1) {
+      // attack player
+      let dmg = Math.max(1, e.atk - ds.player.def + Math.floor(Math.random()*3));
+      // shadow dodge
+      if (c.genes.shadowMatter > 45 && Math.random() < c.genes.shadowMatter/200) {
+        addLog('SYS', `${e.type} attacks — you dodge!`);
+        continue;
+      }
+      ds.player.hp -= dmg;
+      addLog('DMG', `${e.type} hits you for ${dmg}. (${Math.max(0,ds.player.hp)} HP left)`);
+      if (ds.player.hp <= 0) { endRun(); return; }
+    } else if (dist < 8) {
+      // move toward player
+      const mx = Math.abs(ddx)>=Math.abs(ddy) ? Math.sign(ddx) : 0;
+      const my = Math.abs(ddx)<Math.abs(ddy)  ? Math.sign(ddy) : 0;
+      const nx=e.x+mx, ny=e.y+my;
+      if (nx>=0&&ny>=0&&nx<MAP_W&&ny<MAP_H && ds.map[ny][nx]!==T.WALL) {
+        const blocked = ds.enemies.some(o=>o.alive&&o.id!==e.id&&o.x===nx&&o.y===ny) || (nx===ds.player.x&&ny===ds.player.y);
+        if (!blocked) { e.x=nx; e.y=ny; }
+      }
+    }
+  }
+  // regen
+  if (c.genes.regenFactor > 45) {
+    // regen once per floor descent handled in floor gen
+  }
+  updateDungeonHUD();
+}
+
+function endRun() {
+  cancelAnimationFrame(animFrame);
+  animFrame = null;
+  showResultScreen(false);
+}
+
+function updateDungeonHUD() {
+  const ds = dungeonState;
+  const p  = ds.player;
+  document.getElementById('d-floor').textContent = ds.floor;
+  document.getElementById('d-gen').textContent = STATE.generation;
+  document.getElementById('hud-hp').textContent = `${Math.max(0,p.hp)}/${p.maxHp}`;
+  document.getElementById('hud-hp-bar').style.width = Math.max(0,p.hp/p.maxHp*100)+'%';
+  document.getElementById('hud-atk').textContent = p.atk;
+  document.getElementById('hud-def').textContent = p.def;
+  document.getElementById('hud-spd').textContent = p.spd;
+  document.getElementById('hud-lvl').textContent = p.level;
+  const xpNeeded = p.level < MAX_LEVEL ? xpForLevel(p.level+1) : xpForLevel(MAX_LEVEL);
+  const xpPrev   = xpForLevel(p.level);
+  const xpPct    = p.level >= MAX_LEVEL ? 100 : Math.round((p.xp - xpPrev) / (xpNeeded - xpPrev) * 100);
+  document.getElementById('hud-xp-bar').style.width = Math.max(0,xpPct)+'%';
+  document.getElementById('hud-xp').textContent = p.level >= MAX_LEVEL ? 'MAX' : `${p.xp}/${xpNeeded}`;
+  document.getElementById('hud-kills').textContent = ds.kills;
+  document.getElementById('hud-gold').textContent = ds.gold;
+}
+
+function updateSidebar() {
+  const ds = dungeonState;
+  const c  = STATE.currentCreature;
+  document.getElementById('sb-name').textContent = c.name;
+  document.getElementById('sb-arch').textContent = c.arch;
+  const sbCanvas = document.getElementById('sb-portrait-canvas');
+  const ctx = sbCanvas.getContext('2d');
+  ctx.clearRect(0,0,72,72);
+  const tmp = document.createElement('div');
+  tmp.innerHTML = drawPortrait(c.genes,72,72);
+  const svg = tmp.querySelector('svg');
+  const xml = new XMLSerializer().serializeToString(svg);
+  const img = new Image();
+  img.onload = ()=>ctx.drawImage(img,0,0);
+  img.src = 'data:image/svg+xml;base64,'+btoa(xml);
+
+  // Total DNA units collected (for summary line)
+  const totalUnits = Object.values(ds.dnaByType).reduce((a,b)=>a+b,0);
+  document.getElementById('dna-bar').style.width = Math.min(100, totalUnits)+'%';
+  document.getElementById('dna-pct').textContent = `${totalUnits} BITS · ${ds.kills} kills`;
+
+  const breakdown = document.getElementById('dna-breakdown');
+  if (totalUnits === 0) {
+    breakdown.textContent = 'No Bits collected yet.';
+    return;
+  }
+  breakdown.innerHTML = Object.entries(ds.dnaByType)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([type, units]) =>
+      `<div style="display:flex;justify-content:space-between">
+        <span style="color:var(--text)">${type}</span>
+        <span style="color:var(--teal)">${units} bits</span>
+      </div>`
+    ).join('');
+}
+
+function addLog(type, msg) {
+  const log = document.getElementById('dungeon-log');
+  const p = document.createElement('p');
+  const cls = {HIT:'log-hit',DMG:'log-dmg',ITEM:'log-item',FLOOR:'log-floor',SYS:'log-sys'}[type]||'log-sys';
+  p.className = cls;
+  p.textContent = msg;
+  log.appendChild(p);
+  log.scrollTop = log.scrollHeight;
+  // keep log from getting massive
+  while (log.children.length > 80) log.removeChild(log.firstChild);
+}
+
+// keyboard
+function handleKey(e) {
+  if (!document.getElementById('screen-dungeon').classList.contains('active')) return;
+  if (!dungeonState || dungeonState.player.hp <= 0) return;
+  const now = Date.now();
+  if (now - lastMove < MOVE_DELAY) return;
+  const moves = {
+    ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0],
+    w:[0,-1], s:[0,1], a:[-1,0], d:[1,0], W:[0,-1], S:[0,1], A:[-1,0], D:[1,0],
+  };
+  if (e.key in moves) {
+    e.preventDefault();
+    const [dx,dy] = moves[e.key];
+    movePlayer(dx,dy);
+    lastMove = now;
+  }
+  if (e.key === ' ') { enemyTurn(); updateDungeonHUD(); lastMove = now; }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RESULT SCREEN
+// ══════════════════════════════════════════════════════════════════
+function showResultScreen(won) {
+  const rs = STATE.runStats;
+  const ds = dungeonState;
+
+  document.getElementById('result-title').textContent = won ? 'FLOOR CLEARED' : 'CREATURE LOST';
+  document.getElementById('result-title').className = 'result-title ' + (won?'win':'death');
+  document.getElementById('result-sub').textContent = won ? 'YOUR CREATURE FIGHTS ON' : `${STATE.currentCreature.name} HAS FALLEN ON FLOOR ${rs.floor}`;
+
+  document.getElementById('result-stats').innerHTML = [
+    { l:'FLOOR REACHED', v: rs.floor },
+    { l:'KILLS',         v: rs.kills },
+    { l:'GOLD',          v: rs.gold  },
+    { l:'LEVEL REACHED', v: ds ? ds.player.level : 1 },
+  ].map(r=>`<div class="rs-cell"><div class="rs-label">${r.l}</div><div class="rs-val">${r.v}</div></div>`).join('');
+
+
+  // Bits collected — raw units per type
+  const dnaByType = ds ? ds.dnaByType || {} : {};
+  const totalUnits = Object.values(dnaByType).reduce((a,b)=>a+b, 0);
+
+  // Show summary bar capped visually at 100 but label actual total
+  document.getElementById('result-dna-bar').style.width = Math.min(100, totalUnits) + '%';
+  document.getElementById('result-dna-pct').textContent = totalUnits + ' BITS';
+
+  const dnaLines = Object.entries(dnaByType)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([k,v]) => `<div style="display:flex;justify-content:space-between">
+      <span>${k}</span><span style="color:var(--teal)">${v} bits</span>
+    </div>`).join('');
+  document.getElementById('result-dna-msg').innerHTML = dnaLines ||
+    `<div style="color:var(--text-dim)">No Bits collected — self DNA fills 100%</div>`;
+
+  // Store raw units for lab (not percentages)
+  STATE.dnaPool = { ...dnaByType };
+  STATE.dnaEnemyGenes = ds ? ds.dnaEnemyGenes || {} : {};
+
+  showScreen('screen-result');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// LAB
+// ══════════════════════════════════════════════════════════════════
+let labMix = {}; // sourceKey → pct
+let labSources = []; // [{ key, label, genes, portrait }]
+
+function goToLab() {
+  STATE.generation++;
+  document.getElementById('lab-gen').textContent = STATE.generation;
+
+  labSources = [];
+  labMix = {};
+
+  const pool = STATE.dnaPool || {};  // { GOBLIN: 14, SLIME: 8, ... } raw units
+  const selfKey = STATE.currentCreature.name + ' (self)';
+
+  // Enemy sources — slider max = units collected
+  for (const [type, units] of Object.entries(pool)) {
+    const genes = (STATE.dnaEnemyGenes && STATE.dnaEnemyGenes[type]) || ENEMY_DNA[type] || STATE.currentCreature.genes;
+    labSources.push({ key: type, label: type, genes, isSelf: false, maxUnits: units });
+    labMix[type] = 0; // default to 0, let player choose
+  }
+
+  // Self source — always present, fills remainder
+  labSources.push({ key: selfKey, label: selfKey, genes: STATE.currentCreature.genes, isSelf: true, maxUnits: 100 });
+  labMix[selfKey] = 100; // starts at 100%, drops as enemy sliders go up
+
+  buildLabMixer();
+  updateLabPreview();
+  showScreen('screen-lab');
+}
+
+function buildLabMixer() {
+  const mixer = document.getElementById('dna-mixer');
+  const enemySources = labSources.filter(s => !s.isSelf);
+  const selfSource   = labSources.find(s => s.isSelf);
+
+  mixer.innerHTML = enemySources.map(src => {
+    const max = src.maxUnits || 100;
+    const pct = labMix[src.key] || 0;
+    const safeKey = src.key.replace(/[^a-zA-Z0-9]/g,'_');
+    return `<div class="dna-source-row">
+      <div class="dna-src-portrait">${drawPortrait(src.genes,40,40)}</div>
+      <div class="dna-src-name">${src.label}<br>
+        <span style="color:var(--text-dim);font-size:0.55rem">ENEMY BITS · ${max} COLLECTED</span>
+      </div>
+      <input class="dna-slider" type="range" min="0" max="${max}" value="${pct}"
+        oninput="updateLabSlider('${safeKey}', this.value, '${src.key}')">
+      <div class="dna-src-pct" id="lab-pct-${safeKey}">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  if (selfSource) {
+    mixer.innerHTML += `<div class="dna-source-row" style="opacity:0.7">
+      <div class="dna-src-portrait">${drawPortrait(selfSource.genes,40,40)}</div>
+      <div class="dna-src-name">${selfSource.label}<br>
+        <span style="color:var(--amber-dim);font-size:0.55rem">AUTO-FILL · REMAINDER</span>
+      </div>
+      <div style="flex:2;height:4px;background:var(--border);align-self:center;margin:0 8px">
+        <div id="self-fill-bar" style="height:100%;background:var(--amber-dim);transition:width 0.2s;width:100%"></div>
+      </div>
+      <div class="dna-src-pct" id="lab-pct-self">100%</div>
+    </div>`;
+  }
+
+  updateLabTotal();
+}
+
+function updateLabSlider(safeKey, val, originalKey) {
+  labMix[originalKey] = parseInt(val);
+  document.getElementById('lab-pct-'+safeKey).textContent = val+'%';
+  updateLabTotal();
+  updateLabPreview();
+}
+
+function updateLabTotal() {
+  // Enemy sliders are in raw units (1 unit = 1% in the blend)
+  // Total enemy % = sum of slider values, self fills 100 - that
+  const enemyTotal = labSources
+    .filter(s => !s.isSelf)
+    .reduce((sum, s) => sum + (labMix[s.key] || 0), 0);
+  const selfFill = Math.max(0, 100 - enemyTotal);
+
+  const selfSource = labSources.find(s => s.isSelf);
+  if (selfSource) labMix[selfSource.key] = selfFill;
+
+  const selfBar = document.getElementById('self-fill-bar');
+  const selfPct = document.getElementById('lab-pct-self');
+  if (selfBar) selfBar.style.width = selfFill + '%';
+  if (selfPct) selfPct.textContent = selfFill + '%';
+
+  const el = document.getElementById('dna-total');
+  if (enemyTotal > 100) {
+    el.textContent = `TOTAL: ${enemyTotal}% enemy — REDUCE TO FIT (max 100%)`;
+    el.className = 'dna-total bad';
+  } else {
+    el.textContent = `TOTAL: 100% ✓  (${enemyTotal}% enemy · ${selfFill}% self)`;
+    el.className = 'dna-total ok';
+  }
+}
+
+function computeLabGenes() {
+  // Weighted blend across all sources
+  const total = Object.values(labMix).reduce((a,b)=>a+b,0);
+  if (total === 0) return { ...STATE.currentCreature.genes };
+
+  const newGenes = {};
+  for (const gd of GENE_DEFS) {
+    let weighted = 0;
+    for (const src of labSources) {
+      const w = (labMix[src.key] || 0) / total;
+      weighted += (src.genes[gd.key] || 0) * w;
+    }
+    // Small mutation variance so even pure mixes have slight drift
+    const rng = mulberry32((Date.now() + gd.key.charCodeAt(0)) & 0xffffffff);
+    const variance = (rng() - 0.5) * 8;
+    newGenes[gd.key] = Math.round(Math.max(gd.min, Math.min(gd.max, weighted + variance)));
+  }
+  return newGenes;
+}
+
+function updateLabPreview() {
+  const genes = computeLabGenes();
+  document.getElementById('preview-portrait').innerHTML = drawPortrait(genes, 120, 120);
+
+  const statGenes = GENE_DEFS.filter(g=>g.group==='stat');
+  const abilGenes = GENE_DEFS.filter(g=>g.group==='ability');
+  const gr = document.getElementById('gene-readout');
+  gr.innerHTML = [...statGenes,...abilGenes].map(gd => {
+    const v = genes[gd.key];
+    const pct = Math.round(v/100*100);
+    // Show parent influence as bar color
+    const dominantSrc = labSources.reduce((best,src) =>
+      (labMix[src.key]||0) > (labMix[best.key]||0) ? src : best, labSources[0]);
+    const barColor = dominantSrc?.isSelf ? 'var(--amber)' : 'var(--teal)';
+    return `<div class="gr-row">
+      <div class="gr-label">${gd.label}</div>
+      <div class="gr-bar-wrap"><div class="gr-bar" style="width:${pct}%;background:${barColor}"></div></div>
+      <div class="gr-val">${v}</div>
+    </div>`;
+  }).join('');
+
+  const stats = deriveStats(genes, 1);
+  document.getElementById('lab-stats').innerHTML = [
+    {l:'HP @L1',v:stats.hp,cls:'hp'},{l:'ATK',v:stats.atk,cls:'atk'},
+    {l:'DEF',v:stats.def,cls:'def'},{l:'SPD',v:stats.spd,cls:'spd'},
+  ].map(s=>`<span class="spl ${s.cls}">${s.l} ${s.v}</span>`).join('');
+
+  const abs = deriveAbilities(genes);
+  document.getElementById('lab-abilities').innerHTML = abs.length
+    ? abs.map(a=>`<div>▸ <span style="color:var(--amber)">${a.name}</span> — ${a.desc}</div>`).join('')
+    : '<div style="color:var(--text-dim)">No active abilities at these gene levels.</div>';
+
+  window._labGenes = genes;
+}
+
+function updatePreviewName() {}
+
+function printNewCreature() {
+  const name = document.getElementById('preview-name').value.trim().toUpperCase() || 'SPECIMEN-X';
+  const genes = window._labGenes || computeLabGenes();
+  STATE.currentCreature = {
+    id: 'custom_' + Date.now(),
+    name, arch: 'GEN ' + STATE.generation,
+    genes, seed: Date.now(),
+    stats: deriveStats(genes, 1),
+    abilities: deriveAbilities(genes),
+  };
+  startPrinter(STATE.currentCreature);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════
+document.addEventListener('keydown', handleKey);
+window.addEventListener('resize', () => {
+  if (document.getElementById('screen-dungeon').classList.contains('active')) {
+    resizeDungeonCanvas();
+  }
+});
+
+// flicker effect on title
+const titleEl = document.querySelector('.title-main');
+setInterval(() => {
+  if (Math.random() < 0.04) {
+    titleEl.style.opacity = '0.7';
+    setTimeout(() => titleEl.style.opacity = '1', 60);
+  }
+}, 500);
+</script>
+</body>
+</html>
